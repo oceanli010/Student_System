@@ -5,26 +5,21 @@
 #include "operation.h"
 
 int main() {
-    FILE* file = fopen("student.bat", "w+");
-    if (file == nullptr) {
-        std::cout << "Failed to read data, please restart the program" << std::endl;
-        return -1;
-    }
-
     std::cout << "===== Welcome to use Student System =====" << std::endl;
-    std::cout << std::endl << "Enter a number to choose next step:" << std::endl;
-    std::cout << "[1]Search  [2]Add  [3]Get All  [0]Exit" << std::endl;
+    Students students;
 
-    int basic_choice;
-    while (1) {
+    while (true) {
+        std::cout << std::endl << "Enter a number to choose next step:" << std::endl;
+        std::cout << "[1]Search  [2]Add  [3]Show All  [0]Exit" << std::endl;
+        int basic_choice;
+
         std::cin >> basic_choice;
-        Students students(file);
 
         switch (basic_choice) {
         case 0:
             std::cout << "Bye!" << std::endl;
-            fclose(file);
             return 0;
+            break;
 
         case 1:
             std::cout << "Search by: [1]name  [2]ID" << std::endl;
@@ -44,9 +39,11 @@ int main() {
             int sort_choice;
             std::cin >> sort_choice;
             students.sortSearchList(sort_choice);
+            break;
 
         case 2:
             students.addStudent();
+            break;
 
         case 3:
             students.showStudents();
@@ -59,8 +56,7 @@ int main() {
             int sor_choice;
             std::cin >> sor_choice;
             students.sortSearchList(sor_choice);
+            break;
         }
-
     }
-    return 0;
 }

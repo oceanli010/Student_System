@@ -7,11 +7,14 @@
 
 class Students {
 public:
-    Students(std::FILE *fp) {
-        file = fp;
-        int stu_num;
-        std::fread(&stu_num, sizeof(int), 1, fp);
-        std::fread(&students_, sizeof(Student), stu_num, fp);
+    Students() {
+        FILE *file = fopen("student.bat", "rb");
+        fseek(file, 0, SEEK_END);
+        long file_size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        size_t size = file_size / sizeof(Student);
+        fread(&students_, sizeof(Student), size, file);
+        fclose(file);
     }
 
     void addStudent() {
@@ -83,7 +86,7 @@ public:
         if (search_list_.empty()) {
             std::cout << "No Student found!" << std::endl;
         } else {
-            std::cout << search_list_.size() << " result(s)" << "have been found:" << std::endl;
+            std::cout << search_list_.size() << " result(s) " << "have been found:" << std::endl;
             showSearchList();
         }
     }
@@ -92,17 +95,21 @@ public:
         switch (mode) {
         case 1:
             std::sort(search_list_.begin(), search_list_.end(), cmp_Up_as_ID);
+            break;
         case 2:
             std::sort(search_list_.begin(), search_list_.end(), cmp_Down_as_ID);
+            break;
         case 3:
             std::sort(search_list_.begin(), search_list_.end(), cmp_Up_as_Name);
+            break;
         case 4:
             std::sort(search_list_.begin(), search_list_.end(), cmp_Down_as_Name);
+            break;
         case 0:
-            std::cout << "Sort Cancled" << std::endl;
+            std::cout << "Sort Canceled" << std::endl;
             return;
         }
-        std::cout << "Sort canceled:" << std::endl;
+        //std::cout << "Sort canceled:" << std::endl;
         showSearchList();
     }
 
@@ -127,28 +134,29 @@ public:
     void showSearchList() {
         std::cout << "ID          " << "Name          " << "Age    " << "Score   " << "Class"<< std::endl;
         for (auto& student : search_list_) {
-            std::cout << student.stu_id << "          " << student.stu_name <<"          " << student.stu_age << "    "
-                      << student.stu_score << "   " << student.stu_class << std::endl;
+            std::cout << student.stu_id << "      " << student.stu_name <<"        " << student.stu_age << "    "
+                      << student.stu_score << "     " << student.stu_class << std::endl;
         }
     }
 
     void showStudents() {
         std::cout << "ID          " << "Name          " << "Age    " << "Score   " << "Class"<< std::endl;
         for (auto& student : students_) {
-            std::cout << student.stu_id << "          " << student.stu_name <<"          " << student.stu_age << "    "
-                      << student.stu_score << "   " << student.stu_class << std::endl;
+            std::cout << student.stu_id << "      " << student.stu_name <<"        " << student.stu_age << "    "
+                      << student.stu_score << "     " << student.stu_class << std::endl;
         }
     }
 
     ~Students() {
-        std::rewind(file);
-        int stu_size = students_.size();
-        std::fwrite(&stu_size, sizeof(int), 1, file);
-        std::fwrite(&students_, sizeof(Student), stu_size, file);
-        std::fclose(file);
+        FILE *file = fopen("student.bat", "wb");
+        fseek(file, 0, SEEK_END);
+        long file_size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        size_t size = file_size / sizeof(Student);
+        fwrite(students_.data(), sizeof(Student), size, file);
+        fclose(file);
     }
 private:
     std::vector<Student> students_;
     std::vector<Student> search_list_;
-    FILE *file;
 };
