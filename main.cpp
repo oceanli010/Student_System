@@ -55,7 +55,7 @@ int main() {
             std::cout << "[0]Exit" << std::endl;
             int sor_choice;
             std::cin >> sor_choice;
-            students.sortSearchList(sor_choice);
+            students.sortStudentList(sor_choice);
             break;
         }
     }

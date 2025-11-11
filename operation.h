@@ -2,30 +2,44 @@
 
 #include <cstdio>
 #include <vector>
+#include <iostream>
+#include <algorithm>
+#include <cstring>
 
 #include "student.h"
 
 class Students {
 public:
     Students() {
-        FILE *file = fopen("student.bat", "rb");
+        FILE *file = fopen("student.dat", "rb");
+        if (!file) {
+            file = fopen("student.dat", "wb");
+            if (!file) {
+                fclose(file);
+            }
+            return;
+        }
         fseek(file, 0, SEEK_END);
         long file_size = ftell(file);
         fseek(file, 0, SEEK_SET);
-        size_t size = file_size / sizeof(Student);
-        fread(&students_, sizeof(Student), size, file);
+        if (file_size > 0) {
+            size_t size = file_size / sizeof(Student);
+            students_.resize(size);
+            fread(students_.data(), sizeof(Student), size, file);
+        }
         fclose(file);
     }
 
     void addStudent() {
-        std::string id;
+        char id[MAX_ID_LEN];
         std::cout << "Enter ID of the student to add: ";
-        std::cin >> id;
+        std::cin.ignore();
+        std::cin.getline(id, MAX_ID_LEN);
         std::cout << std::endl;
 
-        std::string name;
+        char name[MAX_NAME_LEN];
         std::cout << "Enter name of the student to add: ";
-        std::cin >> name;
+        std::cin.getline(name, MAX_NAME_LEN);
         std::cout << std::endl;
 
         int age;
@@ -39,13 +53,17 @@ public:
         std::cout << std::endl;
 
         ClassType class_type;
-        std::cout << "Enter class of the student to add: ";
-        scanf("%d", &class_type);
+        std::cout << "Enter class of the student to add(0=Class1, 1=Class2, 2=Class3): ";
+        int class_id;
+        std::cin >> class_id;
+        class_type = static_cast<ClassType>(class_id);
         std::cout << std::endl;
 
         Student stu;
-        stu.stu_id = id;
-        stu.stu_name = name;
+        strncpy(stu.stu_id, id, MAX_ID_LEN - 1);
+        stu.stu_id[MAX_ID_LEN - 1] = '\0';
+        strncpy(stu.stu_name, name, MAX_NAME_LEN - 1);
+        stu.stu_name[MAX_NAME_LEN - 1] = '\0';
         stu.stu_age = age;
         stu.stu_score = score;
         stu.stu_class = class_type;
@@ -55,36 +73,38 @@ public:
 
     void searchStudentAsName() {
         search_list_.clear();
-        std::string name;
+        char name[MAX_NAME_LEN];
         std::cout << "Enter name of the student to search: ";
+        std::cin.ignore();
         std::cin >> name;
         for (auto& student : students_) {
-            if (student.stu_name.find(name) != std::string::npos) {
+            if (strstr(student.stu_name, name) != nullptr) {
                 search_list_.push_back(student);
             }
         }
 
         if (search_list_.empty()) {
-            std::cout << "No Student found!" << std::endl;
+            std::cout << "Cannot find any result!" << std::endl;
         } else {
-            std::cout << search_list_.size() << " result(s)" << "have been found:" << std::endl;
+            std::cout << search_list_.size() << " result(s) " << "have been found:" << std::endl;
             showSearchList();
         }
     }
 
     void searchStudentAsID() {
         search_list_.clear();
-        std::string id;
-        std::cout << "Enter name of the student to search: ";
+        char id[MAX_ID_LEN];
+        std::cout << "Enter ID of the student to search: ";
+        std::cin.ignore();
         std::cin >> id;
         for (auto& student : students_) {
-            if (student.stu_id.find(id) != std::string::npos) {
+            if (strstr(student.stu_id, id) != nullptr) {
                 search_list_.push_back(student);
             }
         }
 
         if (search_list_.empty()) {
-            std::cout << "No Student found!" << std::endl;
+            std::cout << "Cannot find any result!" << std::endl;
         } else {
             std::cout << search_list_.size() << " result(s) " << "have been found:" << std::endl;
             showSearchList();
@@ -117,12 +137,16 @@ public:
         switch (mode) {
         case 1:
             std::sort(students_.begin(), students_.end(), cmp_Up_as_ID);
+            break;
         case 2:
             std::sort(students_.begin(), students_.end(), cmp_Down_as_ID);
+            break;
         case 3:
             std::sort(students_.begin(), students_.end(), cmp_Up_as_Name);
+            break;
         case 4:
-            std::sort(students_.begin(), students_.end(), cmp_Up_as_Name);
+            std::sort(students_.begin(), students_.end(), cmp_Down_as_Name);
+            break;
         case 0:
             std::cout << "Sort canceled" << std::endl;
             return;
@@ -131,7 +155,7 @@ public:
         showStudents();
     }
 
-    void showSearchList() {
+    void showSearchList() const {
         std::cout << "ID          " << "Name          " << "Age    " << "Score   " << "Class"<< std::endl;
         for (auto& student : search_list_) {
             std::cout << student.stu_id << "      " << student.stu_name <<"        " << student.stu_age << "    "
@@ -139,21 +163,28 @@ public:
         }
     }
 
-    void showStudents() {
-        std::cout << "ID          " << "Name          " << "Age    " << "Score   " << "Class"<< std::endl;
-        for (auto& student : students_) {
-            std::cout << student.stu_id << "      " << student.stu_name <<"        " << student.stu_age << "    "
-                      << student.stu_score << "     " << student.stu_class << std::endl;
+    void showStudents() const {
+        if (students_.empty()) {
+            std::cout << "No Student found!" << std::endl;
+            return;
+        } else {
+            std::cout << "ID          " << "Name          " << "Age    " << "Score   " << "Class"<< std::endl;
+            for (auto& student : students_) {
+                std::cout << student.stu_id << "      " << student.stu_name <<"        " << student.stu_age << "    "
+                          << student.stu_score << "     " << student.stu_class << std::endl;
+            }
         }
     }
 
     ~Students() {
-        FILE *file = fopen("student.bat", "wb");
-        fseek(file, 0, SEEK_END);
-        long file_size = ftell(file);
-        fseek(file, 0, SEEK_SET);
-        size_t size = file_size / sizeof(Student);
-        fwrite(students_.data(), sizeof(Student), size, file);
+        FILE *file = fopen("student.dat", "wb");
+        if (file == nullptr) {
+            return;
+        }
+        size_t size = students_.size();
+        if (size > 0) {
+            fwrite(students_.data(), sizeof(Student), size, file);
+        }
         fclose(file);
     }
 private:
